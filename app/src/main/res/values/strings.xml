@@ -1,3 +1,11 @@
+<!DOCTYPE resources [
+        <!ENTITY appname "Beacon">
+        <!ENTITY author "MrGreen">
+        ]>
+
 <resources>
-    <string name="app_name">Beacon</string>
+    <string name="app_name">&appname;</string>
+    <string name="admin_description">Allow &appname; to enable or disable your camera</string>
+
+    <string name="device_admin_pref">PREFERENCE_DEVICE_ADMIN</string>
 </resources>

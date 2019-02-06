@@ -2,6 +2,7 @@ package com.avjajodia.beacon.utilities
 
 import android.content.Context
 import com.avjajodia.beacon.application.BeaconApplication
+import io.socket.client.Socket
 
 
 /**
@@ -15,6 +16,10 @@ class ResourceProviders {
             return BeaconApplication.instance?.applicationContext
         }
 
+
+        fun getSocket(): Socket {
+            return BeaconApplication.getSocket()
+        }
     }
 
 }
