@@ -5,6 +5,7 @@ import android.arch.lifecycle.ViewModelProviders
 import android.bluetooth.BluetoothAdapter
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -52,6 +53,29 @@ class BeaconFragment : Fragment() {
         viewModel.getData().observe(this, Observer<BeaconData> { beaconData ->
             beaconList[beaconData!!.id1] = beaconData.distance.toString()
             beaconListAdapter.notifyDataSetChanged()
+        })
+
+        viewModel.cameraStateChanged().observe(this, Observer { camStateEnabled ->
+
+            if (!camStateEnabled!!) {
+                AlertDialog.Builder(context!!)
+                    .setTitle("Camera Disabled")
+                    .setMessage("Your Camera has been disabled!")
+                    .setCancelable(false)
+                    .setPositiveButton("Ok") { _, _ ->
+
+                    }
+                    .create().show()
+            } else {
+                AlertDialog.Builder(context!!)
+                    .setTitle("Camera Enabled")
+                    .setMessage("Your Camera has been enabled!")
+                    .setCancelable(false)
+                    .setPositiveButton("Ok") { _, _ ->
+
+                    }
+                    .create().show()
+            }
 
         })
 

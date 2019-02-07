@@ -5,7 +5,6 @@ import android.app.admin.DevicePolicyManager
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -13,12 +12,10 @@ import android.content.ServiceConnection
 import android.databinding.ObservableField
 import android.os.RemoteException
 import android.util.Log
-import com.avjajodia.beacon.application.BeaconApplication
 import com.avjajodia.beacon.models.BeaconData
 import com.avjajodia.beacon.receivers.AdminReceiver
 import com.avjajodia.beacon.utilities.ResourceProviders
 import org.altbeacon.beacon.*
-import org.json.JSONObject
 import java.lang.Exception
 
 class BeaconViewModel(application: Application) : AndroidViewModel(application), BeaconConsumer {
@@ -27,9 +24,10 @@ class BeaconViewModel(application: Application) : AndroidViewModel(application),
     private var beaconData: MutableLiveData<BeaconData>
     private val socket = ResourceProviders.getSocket()
     private var devicePolicyManager: DevicePolicyManager
-    private lateinit var mAdmin: ComponentName
+    private var mAdmin: ComponentName
+    private var cameraEnabled: MutableLiveData<Boolean> = MutableLiveData()
 
-    lateinit var dist: ObservableField<String>
+    private lateinit var dist: ObservableField<String>
 
     init {
         socket.connect()
@@ -38,9 +36,12 @@ class BeaconViewModel(application: Application) : AndroidViewModel(application),
         beaconManager = BeaconManager.getInstanceForApplication(applicationContext)
         this.beaconManager.beaconParsers.add(BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"))
         this.beaconManager.beaconParsers.add(BeaconParser().setBeaconLayout("m:2-3=beac,i:4-19,i:20-21,i:22-23,p:24-24,d:25-25"))
+
         beaconManager.bind(this)
         beaconData = MutableLiveData()
         listenServerData()
+
+
     }
 
 
@@ -63,25 +64,14 @@ class BeaconViewModel(application: Application) : AndroidViewModel(application),
 
     override fun onBeaconServiceConnect() {
 
-        //Log.e("SocketConnection", socket.connected().toString())
-
-
-        beaconManager.addRangeNotifier { beacons, region ->
+        beaconManager.addRangeNotifier { beacons, _ ->
 
             try {
-
                 beacons.iterator().forEach {
                     beaconData.value = BeaconData(it.id1.toString(), it.distance)
                     dist = ObservableField(it.distance.toString())
                     emitDataToServer(it.id1.toString(), it.distance.toString())
-                    //dist.set(it.distance.toString())
-                    /*Log.e("id1", it.id1.toString())
-                    Log.e("id2", it.id2.toString())
-                    Log.e("id3", it.id3.toString())
-                    Log.e("Distance", it.distance.toString())
-                    Log.e("UniqueID", region.uniqueId)*/
                 }
-
 
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -102,9 +92,9 @@ class BeaconViewModel(application: Application) : AndroidViewModel(application),
     }
 
     private fun emitDataToServer(a: String, b: String) {
-        socket.emit("new message", a + " => " + b)
-
+        socket.emit("new message", "$a => $b")
     }
+
 
     private fun listenServerData() {
 
@@ -112,10 +102,16 @@ class BeaconViewModel(application: Application) : AndroidViewModel(application),
             if (it[0] == "DisableDeviceCamera") {
                 Log.e("DeviceCam", "Disabled")
                 devicePolicyManager.setCameraDisabled(mAdmin, true)
+                cameraEnabled.postValue(false)
             } else if (it[0] == "EnableDeviceCamera") {
                 Log.e("DeviceCam", "Enabled")
                 devicePolicyManager.setCameraDisabled(mAdmin, false)
+                cameraEnabled.postValue(true)
             }
         }
+    }
+
+    fun cameraStateChanged(): LiveData<Boolean> {
+        return cameraEnabled
     }
 }
